@@ -1,15 +1,37 @@
 ﻿using Photon.Pun;
+using Photon.Realtime;
 using UnityEngine;
+using TMPro;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 // MonoBehaviourPunCallbacksを継承すると、photonViewプロパティが使えるようになる
+[RequireComponent(typeof(SpriteRenderer))]
 public class GamePlayer : MonoBehaviourPunCallbacks
 {
+    [SerializeField]
+    private TextMeshPro nameLabel = default;
+
     private ProjectileManager projectileManager;
+    private SpriteRenderer spriteRenderer;
     private int projectileId = 0;
 
     private void Awake()
     {
         projectileManager = GameObject.FindWithTag("ProjectileManager").GetComponent<ProjectileManager>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
+    private void Start()
+    {
+        var customProperties = photonView.Owner.CustomProperties;
+        bool hasScore = customProperties.TryGetValue("Score", out object scoreObject);
+        int score = (hasScore)? (int)scoreObject : 0;
+        nameLabel.text = $"{photonView.Owner.NickName}({score.ToString()})";
+
+        if(customProperties.TryGetValue("Hue", out object hueObject))
+        {
+            spriteRenderer.color = Color.HSVToRGB((float)hueObject, 1f, 1f);
+        }
     }
 
     private void Update() {
@@ -58,6 +80,37 @@ public class GamePlayer : MonoBehaviourPunCallbacks
     private void HitByProjectile(int projectileId, int ownerId)
     {
         projectileManager.Remove(projectileId, ownerId);
-        Debug.Log("Hit!!");
+        
+        if (photonView.IsMine)
+        {
+            var hashtable = new Hashtable();
+            hashtable["Hue"] = Random.value;
+            PhotonNetwork.LocalPlayer.SetCustomProperties(hashtable);
+        } else if (ownerId == PhotonNetwork.LocalPlayer.ActorNumber){
+            var customProperties = PhotonNetwork.LocalPlayer.CustomProperties;
+            bool hasScore = customProperties.TryGetValue("Score", out object scoreObject);
+            int score = (hasScore)? (int)scoreObject : 0;
+
+            var hashtable = new Hashtable();
+            hashtable["Score"] = score + 100;
+            PhotonNetwork.LocalPlayer.SetCustomProperties(hashtable);
+        }
+    }
+
+    public override void OnPlayerPropertiesUpdate(Player target, Hashtable changedProps)
+    {
+        if (target.ActorNumber != photonView.OwnerActorNr){ return; }
+
+        if(changedProps.TryGetValue("Score", out object scoreObject))
+        {
+            int score = (int)scoreObject;
+            nameLabel.text = $"{photonView.Owner.NickName}({score.ToString()})";
+        }
+
+        if (changedProps.TryGetValue("Hue", out object hueObject))
+        {
+            spriteRenderer.color = Color.HSVToRGB((float)hueObject, 1f,1f);
+        }
+        
     }
 }
