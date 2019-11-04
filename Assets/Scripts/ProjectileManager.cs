@@ -24,12 +24,12 @@ public class ProjectileManager : MonoBehaviour
         }
     }
 
-    public void Fire(int id, int ownerId, Vector3 origin, float angle)
+    public void Fire(int id, int ownerId, Vector3 origin, float angle, int timestamp)
     {
         var projectile = (inactivePool.Count > 0)
             ? inactivePool.Pop()
             : Instantiate(projectilePrefab, transform);
-        projectile.Activate(id, ownerId, origin, angle);
+        projectile.Activate(id, ownerId, origin, angle, timestamp);
         activeList.Add(projectile);
     }
 

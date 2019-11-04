@@ -30,17 +30,16 @@ public class GamePlayer : MonoBehaviourPunCallbacks
                 var dp = mouseWorldPosition - playerWorldPosition;
                 float angle = Mathf.Atan2(dp.y, dp.x);
 
-                photonView.RPC(nameof(FireProjectile), RpcTarget.All, ++projectileId, angle);
+                photonView.RPC(nameof(FireProjectile), RpcTarget.All, transform.position, angle);
             }
         }
     }
 
     [PunRPC]
-    private void FireProjectile(int id, float angle)
+    private void FireProjectile(Vector3 origin, float angle, PhotonMessageInfo info)
     {
-        projectileManager.Fire(id, photonView.OwnerActorNr, transform.position, angle);
-        Debug.Log(id);
-    
+        int timestamp = info.SentServerTimestamp;
+        projectileManager.Fire(timestamp, photonView.OwnerActorNr, origin, angle, timestamp);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
