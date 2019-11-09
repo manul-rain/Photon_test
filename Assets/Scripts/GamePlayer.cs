@@ -19,10 +19,13 @@ public class GamePlayer : MonoBehaviourPunCallbacks
     {
         projectileManager = GameObject.FindWithTag("ProjectileManager").GetComponent<ProjectileManager>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+
+        PhotonNetwork.LocalPlayer.NickName ="Player";
     }
 
     private void Start()
     {
+
         var customProperties = photonView.Owner.CustomProperties;
         bool hasScore = customProperties.TryGetValue("Score", out object scoreObject);
         int score = (hasScore)? (int)scoreObject : 0;
